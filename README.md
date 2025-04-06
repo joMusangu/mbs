@@ -9,7 +9,7 @@ The Movie Booking System (MBS) is a web-based platform that allows users to brow
 📊 Reporting tools for sales and occupancy
 
 How to run the backend:
-Clone the repo: 
+Clone the repo: https://github.com/joMusangu/mbs.git
 
 after cloning the repo open in vscode terminal
 run python manage.py runserver this creates a server that will give you a localhost
