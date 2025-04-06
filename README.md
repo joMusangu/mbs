@@ -1,11 +1,45 @@
-The Movie Booking System (MBS) is a web-based platform that allows users to browse currently running movies, view detailed information, and seamlessly book tickets online. It offers a simple and intuitive interface for customers and a powerful management panel for admins to manage listings, schedules, and bookings.
+Movie Booking System (MBS)
+The Movie Booking System (MBS) is a user-friendly, web-based platform that lets customers browse and book tickets for movies currently playing. With a simple interface for users and a powerful admin panel, MBS makes movie selection and ticket booking a breeze.
 
-🔍 Browse movies by genre, language, or availability 
-📅 View showtimes 
-💳 Secure online ticket booking and payment 
-🎟️ Generate and email ticket confirmations 
-🛠️ Admin dashboard for managing movies and schedules 
-📊 Reporting tools for sales and occupancy
+Features
 
-How to run the backend: Clone the repo: https://github.com/joMusangu/mbs.git
-after cloning the repo open in vscode terminal run python3 manage.py runserver this creates a server that will give you a localhost test all apis on postman or through the localhost link, and see if the database succeeds
+🎬 Browse Movies: Discover movies by genre, language, or availability.
+
+🗓️ View Showtimes: Easily access up-to-date movie schedules.
+
+💳 Secure Online Booking: Book tickets and make payments securely.
+
+🎟️ Ticket Confirmation: Receive email confirmations with your ticket details.
+
+🛠️ Admin Dashboard: Manage movie listings, schedules, and bookings efficiently.
+
+📊 Reporting Tools: Analyze sales and occupancy data.
+
+Running the Backend
+Prerequisites
+Python 3.x installed
+
+Postman (for testing APIs)
+
+Setup Instructions
+Clone the repository:
+git clone https://github.com/joMusangu/mbs.git
+Navigate to the backend folder:
+
+Open your terminal or VSCode terminal, then run:
+cd mbs_backend
+Run the server:
+
+Start the server by running:
+python3 manage.py runserver
+This will start the server, and you can access it locally at http://127.0.0.1:8000/.
+
+Testing the APIs:
+
+You can test the available APIs using Postman or by directly navigating to the corresponding URL in your browser.
+
+Important:
+All available API endpoints can be found in the urls.py file.
+
+To view users in the database, use the following endpoint:
+http://127.0.0.1:8000/api/users/
