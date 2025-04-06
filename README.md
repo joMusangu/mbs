@@ -24,12 +24,12 @@ Postman (for testing APIs)
 Setup Instructions
 Clone the repository:
 git clone https://github.com/joMusangu/mbs.git
-Navigate to the backend folder:
 
+Navigate to the backend folder:
 Open your terminal or VSCode terminal, then run:
 cd mbs_backend
-Run the server:
 
+Run the server:
 Start the server by running:
 python3 manage.py runserver
 This will start the server, and you can access it locally at http://127.0.0.1:8000/.
