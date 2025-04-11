@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import get_users, create_user, user_detail
+from .views import get_users, create_user, user_detail, get_movies, create_movie
 
 
 urlpatterns  = [
     path('users/', get_users, name='get_users'),
     path('users/create/', create_user, name='create_user'),
-    path('users/<int:pk>/', user_detail, name='user_detail')
+    path('users/<int:pk>/', user_detail, name='user_detail'),
+    path('movies/', get_movies, name='get_movies'),
+    path('movies/create/', create_movie, name='create_movie'),
     
 ]
