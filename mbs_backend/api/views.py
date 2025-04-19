@@ -1,9 +1,10 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.core.mail import send_mail
 from rest_framework import status
 from datetime import date
-from .models import User, Movies, Home_page
-from .serializer import HomePageSerializer
+from .models import User, Movies, Payment
+from .serializer import PaymentSerializer
 from .serializer import MoviesSerializer
 from .serializer import UserSerializer
 
@@ -95,9 +96,42 @@ def upcoming_movies(request):
     serializer = MoviesSerializer(movies, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@api_view(['GET'])
-def home_page(request):
-    home_page = Home_page.objects.all()
-    serializer = HomePageSerializer(home_page, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+@api_view(['POST'])
+def payment_checkout(request):
+    serializer = PaymentSerializer(data=request.data)
+    if serializer.is_valid():
+        payment = serializer.save()
 
+        send_mail(
+            subject='Payment Confirmation',
+            message=f'Your payment of {payment.amount} has been processed successfully.',
+            from_email="noreply@example.com",
+            recipient_list=[payment.user.email],
+            fail_silently=False,
+        )
+        return Response({"message": "Payment processed successfully. Confirmation email sent."}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def payment_confirm(request):
+     transaction_id = request.GET.get('transaction_id')
+     try:
+         payment = Payment.objects.get(transaction_id=transaction_id)
+         payment.status = 'COMPLETED'
+         payment.save()
+         return Response({"message": "Payment confirmed successfully and ticket issued."}, status=status.HTTP_200_OK)
+     except Payment.DoesNotExist:
+         return Response({"error": "Payment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+def payment_third_party(request):
+    serializer = PaymentSerializer(data=request.data)
+    if serializer.is_valid():
+        payment = serializer.save()
+        return Response({"message": "Payment processed successfully."}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def payment_methods(request):
+    methods = [method[1] for method in Payment.PAYMENT_METHODS]
+    return Response(methods, status=status.HTTP_200_OK)
