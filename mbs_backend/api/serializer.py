@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Movies, shows
+from .models import User, Movies
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,7 +11,3 @@ class MoviesSerializer(serializers.ModelSerializer):
         model = Movies
         fields = '__all__'
         
-class showsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = shows
-        fields = '__all__'
