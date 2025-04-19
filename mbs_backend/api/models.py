@@ -19,4 +19,12 @@ class Movies(models.Model):
     def __str__(self):
         return self.title
     
+class Home_page(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    image = models.ImageField(upload_to='home_page_images/')
+    
+    def __str__(self):
+        return self.title
+    
 

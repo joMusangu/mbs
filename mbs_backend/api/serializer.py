@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Movies
+from .models import User, Movies, Home_page
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,3 +11,8 @@ class MoviesSerializer(serializers.ModelSerializer):
         model = Movies
         fields = '__all__'
         
+        
+class HomePageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Home_page
+        fields = '__all__'

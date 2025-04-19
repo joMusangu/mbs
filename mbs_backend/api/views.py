@@ -2,7 +2,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import date
-from .models import User, Movies
+from .models import User, Movies, Home_page
+from .serializer import HomePageSerializer
 from .serializer import MoviesSerializer
 from .serializer import UserSerializer
 
@@ -92,5 +93,11 @@ def upcoming_movies(request):
     today = date.today()
     movies = Movies.objects.filter(release_date__gt=today)
     serializer = MoviesSerializer(movies, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def home_page(request):
+    home_page = Home_page.objects.all()
+    serializer = HomePageSerializer(home_page, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
