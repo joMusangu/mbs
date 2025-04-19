@@ -27,4 +27,12 @@ class Home_page(models.Model):
     def __str__(self):
         return self.title
     
+class feedback(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    feedback_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback from {self.user.email} on {self.created_at}"
+    
 
