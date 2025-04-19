@@ -135,3 +135,4 @@ def payment_third_party(request):
 def payment_methods(request):
     methods = [method[1] for method in Payment.PAYMENT_METHODS]
     return Response(methods, status=status.HTTP_200_OK)
+
