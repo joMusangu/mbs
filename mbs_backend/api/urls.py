@@ -4,7 +4,7 @@ from .views import get_users, create_user, user_detail,movies, now_playing, upco
 
 
 urlpatterns  = [
-    path('users/me', get_users, name='get_users'),
+    path('users/', get_users, name='get_users'),
     path('users/register/', create_user, name='create_user'),
     path('users/<int:pk>/', user_detail, name='user_detail'),
     path('movies/', movies, name='movies'),
