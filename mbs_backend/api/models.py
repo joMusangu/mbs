@@ -49,5 +49,18 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  
     updated_at = models.DateTimeField(auto_now=True)  
 
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    movie = models.CharField(max_length=255)
+    purchase_date = models.DateTimeField(auto_now_add=True)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Order by {self.user} on {self.purchase_date} for {self.movie}"
+
+class Ticket(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tickets')
+    show_time = models.DateTimeField()
+
     def __str__(self):
         return f"{self.user.email} - {self.method} - {self.status}"

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import get_users, create_user, user_detail,movies, now_playing, upcoming_movies, home_page, payment_checkout, payment_confirm, payment_third_party, payment_methods
+from .views import get_users, create_user, user_detail,movies, now_playing, upcoming_movies, home_page, payment_checkout, payment_confirm, payment_third_party, payment_methods, order_history, order_detail, ticket_detail, user_tickets
 
 
 
@@ -16,5 +16,9 @@ urlpatterns  = [
     path('payments/confirm/', payment_confirm, name='payment_confirm'),
     path('payments/third-party/', payment_third_party, name='payment_third_party'),
     path('payments/methods/', payment_methods, name='payment_methods'),
-    
+    path('orders/history/', order_history, name='order_history'),
+    path('orders/<int:id>/', order_detail, name='order_detail'),
+    path('tickets/<int:id>/', ticket_detail, name='ticket_detail'),
+    path('tickets/user/', user_tickets, name='user_tickets'),
+
 ]

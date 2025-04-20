@@ -3,12 +3,12 @@ from rest_framework.response import Response
 from django.core.mail import send_mail
 from rest_framework import status
 from datetime import date
-from .models import User, Movies, Payment, Home_page
+from .models import User, Movies, Payment, Home_page, Order, Ticket
 from .serializer import HomePageSerializer
 from .serializer import PaymentSerializer
 from .serializer import MoviesSerializer
 from .serializer import UserSerializer
-
+from .serializer import TicketSerializer, OrderSerializer
 
 @api_view(['GET'])
 def get_users(request):
@@ -143,3 +143,44 @@ def home_page(request):
     serializer = HomePageSerializer(home_page, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK) 
 
+@api_view(['GET'])
+def order_history(request):
+    user_id = request.query_params.get('user_id')
+
+    if not user_id:
+        return Response({"error": "User ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    orders = Order.objects.filter(user_id=user_id)
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def order_detail(request, id):
+    try:
+        order = Order.objects.get(id=id)
+    except Order.DoesNotExist:
+        return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = OrderSerializer(order)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def ticket_detail(request, id):
+    try:
+        ticket = Ticket.objects.get(id=id)
+    except Ticket.DoesNotExist:
+        return Response({"error": "Ticket not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TicketSerializer(ticket)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def user_tickets(request):
+    user_id = request.query_params.get('user_id')
+
+    if not user_id:
+        return Response({"error": "User ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    tickets = Ticket.objects.filter(user_id=user_id)
+    serializer = TicketSerializer(tickets, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
