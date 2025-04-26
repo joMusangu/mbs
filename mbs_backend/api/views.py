@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from rest_framework import status
 from datetime import date
 from .models import User, Movies, Payment, Home_page, Order, Ticket
@@ -9,6 +9,8 @@ from .serializer import PaymentSerializer
 from .serializer import MoviesSerializer
 from .serializer import UserSerializer
 from .serializer import TicketSerializer, OrderSerializer
+import qrcode
+import os
 
 @api_view(['GET'])
 def get_users(request):
@@ -45,17 +47,33 @@ def user_detail(request, pk):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'PUT':
-        serializer = UserSerializer(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        first_name = request.data.get('first_name')
+        last_name = request.data.get('last_name')
+        password = request.data.get('password')
+
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        
+        if password:
+            user.set_password(password)
+
+        if not any([first_name, last_name, password]):
+            return Response(
+                {"error": "At least one field (first_name, last_name, or password) is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.save()
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'DELETE':
         user.delete()
         return Response({"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'PUT'])  # Add PUT to the allowed methods
 def movies(request, pk=None):
     if request.method == 'GET':
         if pk: 
@@ -82,6 +100,42 @@ def movies(request, pk=None):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PUT':
+        try:
+            movie = Movies.objects.get(pk=pk)
+        except Movies.DoesNotExist:
+            return Response({"error": "Movie not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get data from request
+        title = request.data.get('title')
+        release_date = request.data.get('release_date')
+        genre = request.data.get('genre')
+        director = request.data.get('director')
+        poster_url = request.data.get('poster_url')
+
+        # Update only provided fields
+        if title:
+            movie.title = title
+        if release_date:
+            movie.release_date = release_date
+        if genre:
+            movie.genre = genre
+        if director:
+            movie.director = director
+        if poster_url:
+            movie.poster_url = poster_url
+
+        # Validate that at least one field is being updated
+        if not any([title, release_date, genre, director, poster_url]):
+            return Response(
+                {"error": "At least one field must be provided for update."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        movie.save()
+        serializer = MoviesSerializer(movie)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 @api_view(['GET'])
 def now_playing(request):
@@ -99,19 +153,123 @@ def upcoming_movies(request):
 
 @api_view(['POST'])
 def payment_checkout(request):
-    serializer = PaymentSerializer(data=request.data)
-    if serializer.is_valid():
+    try:
+        # Validate required fields
+        required_fields = ['user', 'method', 'amount', 'movie', 'show_time']
+        for field in required_fields:
+            if field not in request.data:
+                return Response(
+                    {"error": f"Missing required field: {field}"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Get user instance first
+        try:
+            user = User.objects.get(id=request.data['user'])
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create payment with user instance
+        payment_data = {
+            'user': user.id,  # Use user.id here
+            'method': request.data['method'],
+            'amount': request.data['amount'],
+            'status': 'PENDING',
+            'transaction_id': request.data.get('transaction_id', None)
+        }
+
+        serializer = PaymentSerializer(data=payment_data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
         payment = serializer.save()
 
-        send_mail(
-            subject='Payment Confirmation',
-            message=f'Your payment of {payment.amount} has been processed successfully.',
-            from_email="noreply@example.com",
-            recipient_list=[payment.user.email],
-            fail_silently=False,
+        # Create order after payment
+        order = Order.objects.create(
+            user=user,
+            movie=request.data['movie'],
+            total_price=payment.amount
         )
-        return Response({"message": "Payment processed successfully. Confirmation email sent."}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create ticket
+        ticket = Ticket.objects.create(
+            order=order,
+            show_time=request.data['show_time']
+        )
+
+        # Generate QR code data
+        qr_data = (
+            f"Ticket ID: {ticket.id}\n"
+            f"Order ID: {order.id}\n"
+            f"Movie: {order.movie}\n"
+            f"Show Time: {ticket.show_time}\n"
+            f"User: {order.user.email}"
+        )
+        
+        # Generate and save QR code
+        qr_image = qrcode.make(qr_data)
+        qr_code_path = f"media/qr_codes/ticket_{ticket.id}.png"
+        os.makedirs(os.path.dirname(qr_code_path), exist_ok=True)
+        qr_image.save(qr_code_path)
+
+        # Update ticket with QR code path
+        ticket.qr_code_path = qr_code_path
+        ticket.save()
+
+        # Prepare email content
+        email_body = f"""
+        Thank you for your purchase!
+
+        Order Details:
+        Movie: {order.movie}
+        Show Time: {ticket.show_time}
+        Amount Paid: ${payment.amount}
+
+        Your ticket is attached to this email.
+        Please present the QR code at the theater entrance.
+
+        Enjoy the movie!
+        """
+
+        # Send confirmation email
+        try:
+            email = EmailMessage(
+                subject='Movie Ticket Confirmation',
+                body=email_body,
+                from_email="noreply@moviebooking.com",
+                to=[payment.user.email],
+            )
+            email.attach_file(qr_code_path)
+            email.send()
+        except Exception as e:
+            print(f"Email sending failed: {str(e)}")
+
+        # Return success response with order details
+        response_data = {
+            "message": "Payment processed successfully",
+            "order": {
+                "id": order.id,
+                "movie": order.movie,
+                "total_price": str(order.total_price),
+                "ticket": {
+                    "id": ticket.id,
+                    "show_time": ticket.show_time,
+                    "qr_code_url": f"/media/qr_codes/ticket_{ticket.id}.png"
+                },
+                "payment": {
+                    "status": payment.status,
+                    "transaction_id": payment.transaction_id
+                }
+            }
+        }
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response(
+            {"error": str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @api_view(['POST'])
 def payment_confirm(request):
